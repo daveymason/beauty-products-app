@@ -23,18 +23,13 @@
 	<link rel="canonical" href="https://flourishing-biscotti-c23ea6.netlify.app">
 	<meta name="robots" content="index, follow">
 	<meta name="author" content="B-Futurist">
-	<link rel="preload" href="/beautynow.gif" as="image">
 </svelte:head>
 
+<!-- The gif was here but scored badly on lighthouse -->
 <div class="page-container">
 	<div class="hero-section">
-		<img 
-			src="/beautynow.gif" 
-			alt="Beauty Now - Premium Beauty Products" 
-			class="hero-gif"
-			loading="eager"
-			decoding="async"
-		/>
+        <h1>Perfumenow</h1>
+        <p>Niche Perfume & Beauty</p>
 	</div>
 
 	<div class="cta-section">
