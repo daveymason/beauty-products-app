@@ -9,13 +9,17 @@
   --color-text-muted: #999;
   --color-bg: #ffffff;
   --color-card: #ffffff;
-  --color-border: #e5e5e5;
-  --color-border-hover: #d1d5db;
+  --color-border: #d1d5db;
+  --color-border-hover: #9ca3af;
+  --color-border-light: #e5e7eb;
   
-  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-premium: 0 12px 40px rgba(0, 0, 0, 0.1);
-  --shadow-gold: 0 8px 24px rgba(212, 175, 55, 0.15);
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-premium: 0 12px 40px rgba(0, 0, 0, 0.15);
+  --shadow-gold: 0 8px 24px rgba(212, 175, 55, 0.2);
+  
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.2);
   
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
@@ -37,6 +41,40 @@ body {
 }
 
 .glass-effect {
-  background: var(--color-card);
+  background: var(--glass-bg);
   border: 1px solid var(--color-border);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow-soft);
+}
+
+/* WAs fine on one screen but didn't look good on the other so added this to make theborders easier to see*/
+@media (max-resolution: 150dpi), (max-device-pixel-ratio: 1.5) {
+  :root {
+    --color-border: #9ca3af;
+    --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.12);
+    --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-premium: 0 12px 40px rgba(0, 0, 0, 0.18);
+  }
+  
+  .glass-effect {
+    border-width: 1.5px;
+  }
+}
+
+/* Mobile-specific overflow fixes */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  input, select, textarea {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 }

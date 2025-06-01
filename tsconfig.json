@@ -1,0 +1,16 @@
+{
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "moduleResolution": "bundler"
+  },
+  "exclude": [
+    "node_modules/**",
+    ".svelte-kit/output/**",
+    "src/service-worker.*",
+    "src/service-worker/**",
+    "src/lib/components/Toast.svelte",
+    "src/lib/components/ToastContainer.svelte"
+  ]
+}

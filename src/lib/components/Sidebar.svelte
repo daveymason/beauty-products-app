@@ -1,5 +1,6 @@
 <script>
   import Icon from './Icon.svelte';
+  import { createToggleFunction } from '$lib/utils/index.js';
   
   export let products = [];
   export let searchTerm = '';
@@ -130,9 +131,13 @@
         case 'brand-desc':
           return (b.brand || '').localeCompare(a.brand || '');
         case 'price-low':
-          return (a.variations?.[0]?.price || 0) - (b.variations?.[0]?.price || 0);
+          const aDisplayPrice = Math.min(...(a.variations?.map(v => v.price) || [0]));
+          const bDisplayPrice = Math.min(...(b.variations?.map(v => v.price) || [0]));
+          return aDisplayPrice - bDisplayPrice;
         case 'price-high':
-          return (b.variations?.[0]?.price || 0) - (a.variations?.[0]?.price || 0);
+          const aDisplayPriceHigh = Math.min(...(a.variations?.map(v => v.price) || [0]));
+          const bDisplayPriceHigh = Math.min(...(b.variations?.map(v => v.price) || [0]));
+          return bDisplayPriceHigh - aDisplayPriceHigh;
         case 'newest':
           // Assumed the newest products have the highest IDs
           return parseInt(b.id) - parseInt(a.id);
@@ -154,45 +159,12 @@
     onFilterChange(filteredAndSortedProducts);
   }
   
-  function toggleBrand(brand) {
-    if (selectedBrands.includes(brand)) {
-      selectedBrands = selectedBrands.filter(b => b !== brand);
-    } else {
-      selectedBrands = [...selectedBrands, brand];
-    }
-  }
-  
-  function toggleAccord(accord) {
-    if (selectedAccords.includes(accord)) {
-      selectedAccords = selectedAccords.filter(a => a !== accord);
-    } else {
-      selectedAccords = [...selectedAccords, accord];
-    }
-  }
-  
-  function toggleGender(gender) {
-    if (selectedGenders.includes(gender)) {
-      selectedGenders = selectedGenders.filter(g => g !== gender);
-    } else {
-      selectedGenders = [...selectedGenders, gender];
-    }
-  }
-  
-  function toggleType(type) {
-    if (selectedTypes.includes(type)) {
-      selectedTypes = selectedTypes.filter(t => t !== type);
-    } else {
-      selectedTypes = [...selectedTypes, type];
-    }
-  }
-  
-  function toggleCollection(collection) {
-    if (selectedCollections.includes(collection)) {
-      selectedCollections = selectedCollections.filter(c => c !== collection);
-    } else {
-      selectedCollections = [...selectedCollections, collection];
-    }
-  }
+  // Create toggle functions using utility
+  $: toggleBrand = createToggleFunction(selectedBrands, (val) => selectedBrands = val);
+  $: toggleAccord = createToggleFunction(selectedAccords, (val) => selectedAccords = val);
+  $: toggleGender = createToggleFunction(selectedGenders, (val) => selectedGenders = val);
+  $: toggleType = createToggleFunction(selectedTypes, (val) => selectedTypes = val);
+  $: toggleCollection = createToggleFunction(selectedCollections, (val) => selectedCollections = val);
   
   function clearAllFilters() {
     selectedBrands = [];
@@ -206,6 +178,20 @@
   
   export function toggleMobileFilters() {
     showMobileFilters = !showMobileFilters;
+  }
+  
+  function handleSizeMinChange(event) {
+    const value = parseInt(event.target.value);
+    if (value <= sizeRange.max) {
+      sizeRange.min = value;
+    }
+  }
+  
+  function handleSizeMaxChange(event) {
+    const value = parseInt(event.target.value);
+    if (value >= sizeRange.min) {
+      sizeRange.max = value;
+    }
   }
 </script>
 
@@ -226,16 +212,26 @@
       </div>
       <div class="filter-section">
         <h4>Size Range (ml)</h4>
-        <div class="range-slider">
-          <div class="range-inputs">
-            <input type="number" placeholder="Min" bind:value={sizeRange.min} min={minSize} max={maxSize} class="range-input" />
-            <span>-</span>
-            <input type="number" placeholder="Max" bind:value={sizeRange.max} min={minSize} max={maxSize} class="range-input" />
-          </div>
-          <div class="slider-container">
-            <input type="range" min={minSize} max={maxSize} bind:value={sizeRange.min} class="slider slider-min" />
-            <input type="range" min={minSize} max={maxSize} bind:value={sizeRange.max} class="slider slider-max" />
-          </div>
+        <div class="size-inputs">
+          <input 
+            type="number" 
+            placeholder="Min" 
+            bind:value={sizeRange.min}
+            min={minSize}
+            max={maxSize}
+            class="size-input"
+            on:change={handleSizeMinChange}
+          />
+          <span>-</span>
+          <input 
+            type="number" 
+            placeholder="Max" 
+            bind:value={sizeRange.max}
+            min={minSize}
+            max={maxSize}
+            class="size-input"
+            on:change={handleSizeMaxChange}
+          />
         </div>
       </div>
       <div class="filter-section">
@@ -342,42 +338,26 @@
   
   <div class="filter-section">
     <h4>Size Range (ml)</h4>
-    <div class="range-slider">
-      <div class="range-inputs">
-        <input 
-          type="number" 
-          placeholder="Min" 
-          bind:value={sizeRange.min}
-          min={minSize}
-          max={maxSize}
-          class="range-input"
-        />
-        <span>-</span>
-        <input 
-          type="number" 
-          placeholder="Max" 
-          bind:value={sizeRange.max}
-          min={minSize}
-          max={maxSize}
-          class="range-input"
-        />
-      </div>
-      <div class="slider-container">
-        <input 
-          type="range" 
-          min={minSize} 
-          max={maxSize} 
-          bind:value={sizeRange.min}
-          class="slider slider-min"
-        />
-        <input 
-          type="range" 
-          min={minSize} 
-          max={maxSize} 
-          bind:value={sizeRange.max}
-          class="slider slider-max"
-        />
-      </div>
+    <div class="size-inputs">
+      <input 
+        type="number" 
+        placeholder="Min" 
+        bind:value={sizeRange.min}
+        min={minSize}
+        max={maxSize}
+        class="size-input"
+        on:change={handleSizeMinChange}
+      />
+      <span>-</span>
+      <input 
+        type="number" 
+        placeholder="Max" 
+        bind:value={sizeRange.max}
+        min={minSize}
+        max={maxSize}
+        class="size-input"
+        on:change={handleSizeMaxChange}
+      />
     </div>
   </div>
   
@@ -467,17 +447,19 @@
 <style>
   .sidebar {
     background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+    border: 1px solid var(--color-border);
     border-radius: 16px;
-    padding: 1.5rem;
+    padding: 1rem;
     height: fit-content;
-    max-height: 80vh;
+    max-height: calc(100vh - 2rem);
     overflow-y: auto;
+    overflow-x: hidden;
     position: sticky;
     top: 1rem;
     backdrop-filter: blur(12px);
     box-shadow: var(--shadow-medium);
     transition: var(--transition-smooth);
+    min-width: 0;
   }
   
   .sidebar:hover {
@@ -489,14 +471,15 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    margin: -1rem -1rem 1rem -1rem;
+    padding: 1rem 1rem 0.75rem 1rem;
     border-bottom: 1px solid var(--color-border);
     position: sticky;
-    top: 0;
-    background: var(--glass-bg);
+    top: -1rem;
+    background: var(--color-card);
     backdrop-filter: blur(12px);
-    z-index: 10;
+    z-index: 100;
+    border-radius: 16px 16px 0 0;
   }
   
   .sidebar-header h3 {
@@ -533,12 +516,13 @@
   }
   
   .filter-section {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    min-width: 0;
   }
   
   .filter-section h4 {
-    margin: 0 0 1rem 0;
-    font-size: 1rem;
+    margin: 0 0 0.75rem 0;
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--color-text);
     position: relative;
@@ -555,24 +539,24 @@
     border-radius: 2px;
   }
   
-  .price-inputs, .range-inputs {
+  .price-inputs, .size-inputs {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
   }
   
-  .price-input, .range-input {
+  .price-input, .size-input {
     flex: 1;
-    padding: 0.625rem 0.75rem;
+    padding: 0.5rem 0.625rem;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     background: var(--color-card);
     transition: var(--transition-smooth);
   }
   
-  .price-input:focus, .range-input:focus {
+  .price-input:focus, .size-input:focus {
     outline: none;
     border-color: var(--color-gold);
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
@@ -591,6 +575,13 @@
     padding: 0.25rem 0;
     cursor: pointer;
     font-size: 0.875rem;
+    min-width: 0;
+  }
+
+  .checkbox-item span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .checkbox-item input[type="checkbox"] {
@@ -599,55 +590,6 @@
   
   .checkbox-item:hover {
     color: #3b82f6;
-  }
-  
-  /* Range Slider Styles */
-  .range-slider {
-    margin-top: 0.5rem;
-  }
-  
-  .slider-container {
-    position: relative;
-    height: 20px;
-    margin-top: 0.5rem;
-  }
-  
-  .slider {
-    position: absolute;
-    width: 100%;
-    height: 6px;
-    background: #e5e5e5;
-    border-radius: 3px;
-    outline: none;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  
-  .slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    background: #3b82f6;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  
-  .slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    background: #3b82f6;
-    border-radius: 50%;
-    cursor: pointer;
-    border: none;
-  }
-  
-  .slider-min {
-    z-index: 1;
-  }
-  
-  .slider-max {
-    z-index: 2;
   }
   
   .mobile-filter-modal {
@@ -711,6 +653,28 @@
   @media (max-width: 768px) {
     .sidebar.desktop-only {
       display: none;
+    }
+  }
+  
+  @media (max-resolution: 150dpi), (max-device-pixel-ratio: 1.5) {
+    .sidebar {
+      border-width: 1.5px;
+    }
+    
+    .price-input, .size-input {
+      border-width: 1.5px;
+    }
+    
+    .price-input:focus, .size-input:focus {
+      border-width: 2px;
+    }
+    
+    .sidebar-header {
+      border-bottom-width: 1.5px;
+    }
+    
+    .checkbox-item input[type="checkbox"] {
+      border: 1.5px solid var(--color-border);
     }
   }
 </style>

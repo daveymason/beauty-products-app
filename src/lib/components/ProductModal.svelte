@@ -1,19 +1,28 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { showToast } from '$lib/stores/toast.js';
   import Icon from './Icon.svelte';
+  import { 
+    getGenderEmoji, 
+    getMinPrice, 
+    isExclusiveProduct, 
+    processProductName,
+    getFirstImageUrl 
+  } from '$lib/utils/index.js';
+  import { getAccordStyle } from '$lib/utils/styles.js';
   
   export let product = null;
   export let isOpen = false;
   
   const dispatch = createEventDispatcher();
   
-  $: imageUrl = product?.images?.[0]?.[0] || '';
+  $: imageUrl = getFirstImageUrl(product?.images);
   $: firstVariation = product?.variations?.[0];
-  $: price = firstVariation?.price || 0;
-  $: regularPrice = firstVariation?.regular_price;
-  $: isExclusive = product?.name?.includes('[Exclusively Whatsapp Internal Sales]') || false;
-  $: displayName = product?.name?.replace('[Exclusively Whatsapp Internal Sales] ', '').replace(/&amp;/g, '&') || product?.name;
+  $: price = getMinPrice(product?.variations);
+  $: regularPrice = product?.variations?.find(v => v.price === price)?.regular_price;
+  $: isExclusive = isExclusiveProduct(product?.name);
+  $: displayName = processProductName(product?.name);
+  
+  let isAdding = false;
   
   function closeModal() {
     isOpen = false;
@@ -21,7 +30,11 @@
   }
   
   function handleAddToCart() {
-    showToast(`${displayName} added to cart!`, 'success');
+    isAdding = true;
+    
+    setTimeout(() => {
+      isAdding = false;
+    }, 1200);
   }
   
   function handleClickOutside(event) {
@@ -84,7 +97,7 @@
               <h4>Main Accords</h4>
               <div class="tags-list">
                 {#each product.attributes['Main Accords'] as tag}
-                  <span class="tag">{tag}</span>
+                  <span class="tag" style={getAccordStyle(tag)}>{tag}</span>
                 {/each}
               </div>
             </div>
@@ -92,7 +105,10 @@
           
           {#if product.attributes?.['Gender']}
             <div class="product-info">
-              <strong>For:</strong> {product.attributes['Gender'].join(', ')}
+              <strong>For:</strong> 
+              {#each product.attributes['Gender'] as gender}
+                {getGenderEmoji(gender)} {gender}
+              {/each}
             </div>
           {/if}
           
@@ -102,9 +118,14 @@
             </div>
           {/if}
           
-          <button class="add-to-cart-btn" on:click={handleAddToCart}>
-            <Icon name="cart" size="20" />
-            Add to cart
+          <button class="add-to-cart-btn" on:click={handleAddToCart} disabled={isAdding}>
+            {#if isAdding}
+              <Icon name="check" size="20" />
+              Added!
+            {:else}
+              <Icon name="cart" size="20" />
+              Add to cart
+            {/if}
           </button>
         </div>
       </div>
@@ -281,13 +302,13 @@
   
   .tag {
     padding: 0.25rem 0.75rem;
-    background: var(--color-gold-light);
-    border: 1px solid var(--color-gold);
-    color: var(--color-primary);
     border-radius: 16px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: capitalize;
+    transition: var(--transition-smooth);
+    backdrop-filter: blur(4px);
+    box-shadow: var(--shadow-soft);
   }
   
   .product-info {
@@ -322,6 +343,14 @@
     color: white;
     transform: translateY(-2px);
     box-shadow: var(--shadow-gold);
+  }
+  
+  .add-to-cart-btn:disabled {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    cursor: not-allowed;
+    border-color: #10b981;
+    transform: none;
   }
   
   @media (max-width: 768px) {

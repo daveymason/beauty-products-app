@@ -1,64 +1,39 @@
 <script>
   import { createEventDispatcher } from 'svelte';
-  import { showToast } from '$lib/stores/toast.js';
-  import Tooltip from './Tooltip.svelte';
   import Icon from './Icon.svelte';
+  import { 
+    getGenderEmoji, 
+    getMinPrice, 
+    isExclusiveProduct, 
+    processProductName,
+    getFirstImageUrl 
+  } from '$lib/utils/index.js';
+  import { getAccordStyle } from '$lib/utils/styles.js';
   
   export let product;
+  export let currentPage;
   
   const dispatch = createEventDispatcher();
   
-  $: imageUrl = product.images?.[0]?.[0] || '';
+  $: imageUrl = getFirstImageUrl(product.images);
   $: firstVariation = product.variations?.[0];
-  $: price = firstVariation?.price || 0;
-  $: regularPrice = firstVariation?.regular_price;
-  $: isExclusive = product.name?.includes('[Exclusively Whatsapp Internal Sales]') || false;
-  $: displayName = product.name?.replace('[Exclusively Whatsapp Internal Sales] ', '').replace(/&amp;/g, '&') || product.name;
+  $: price = getMinPrice(product.variations);
+  $: regularPrice = product.variations?.find(v => v.price === price)?.regular_price;
+  $: isExclusive = isExclusiveProduct(product.name);
+  $: displayName = processProductName(product.name);
+  $: availableSizes = product.attributes?.['Size'] || [];
+  $: collectionLine = product.attributes?.['Collection Line']?.[0] || null;
+  $: gender = product.attributes?.['Gender']?.[0] || null;
   
-  const accordColors = {
-    amber: { bg: '#fef3e2', border: '#fbbf24', text: '#92400e' },
-    aquatic: { bg: '#ecfeff', border: '#06b6d4', text: '#164e63' },
-    aromatic: { bg: '#ecfdf5', border: '#10b981', text: '#064e3b' },
-    balsamic: { bg: '#f3e8ff', border: '#8b5cf6', text: '#4c1d95' },
-    cinnamon: { bg: '#fef2f2', border: '#dc2626', text: '#7f1d1d' },
-    citrus: { bg: '#fefce8', border: '#eab308', text: '#a16207' },
-    earthy: { bg: '#f7f6f3', border: '#a3a3a3', text: '#404040' },
-    floral: { bg: '#fdf2f8', border: '#ec4899', text: '#831843' },
-    fresh: { bg: '#f0fdfa', border: '#22d3ee', text: '#155e75' },
-    'fresh spicy': { bg: '#ecfdf5', border: '#059669', text: '#064e3b' },
-    fruity: { bg: '#fdf2f8', border: '#fb7185', text: '#881337' },
-    green: { bg: '#f7fee7', border: '#84cc16', text: '#365314' },
-    herbal: { bg: '#f0fdf4', border: '#22c55e', text: '#14532d' },
-    iris: { bg: '#f5f3ff', border: '#a855f7', text: '#581c87' },
-    lactonic: { bg: '#fffbeb', border: '#f59e0b', text: '#a16207' },
-    leather: { bg: '#f5f5f4', border: '#78716c', text: '#292524' },
-    marine: { bg: '#f0f9ff', border: '#0ea5e9', text: '#0c4a6e' },
-    musky: { bg: '#f8fafc', border: '#64748b', text: '#334155' },
-    oud: { bg: '#fafaf9', border: '#57534e', text: '#1c1917' },
-    ozonic: { bg: '#f0f9ff', border: '#38bdf8', text: '#0369a1' },
-    patchouli: { bg: '#f6f6f4', border: '#78716c', text: '#1c1917' },
-    powdery: { bg: '#faf5ff', border: '#c084fc', text: '#6b21a8' },
-    rose: { bg: '#fdf2f8', border: '#f472b6', text: '#9d174d' },
-    smoky: { bg: '#f8fafc', border: '#475569', text: '#1e293b' },
-    spicy: { bg: '#fef2f2', border: '#ef4444', text: '#7f1d1d' },
-    sweet: { bg: '#fef7ff', border: '#f472b6', text: '#831843' },
-    tobacco: { bg: '#f7f6f3', border: '#92400e', text: '#451a03' },
-    tuberose: { bg: '#fffbeb', border: '#f59e0b', text: '#a16207' },
-    vanilla: { bg: '#fffbeb', border: '#fbbf24', text: '#92400e' },
-    'warm spicy': { bg: '#fef2f2', border: '#f97316', text: '#9a3412' },
-    'white floral': { bg: '#fefefe', border: '#e5e7eb', text: '#374151' },
-    woody: { bg: '#f7f6f3', border: '#92400e', text: '#451a03' }
-  };
-  
-  function getAccordStyle(accord) {
-    const accordKey = accord.toLowerCase();
-    const colors = accordColors[accordKey] || { bg: 'var(--color-bg)', border: 'var(--color-border)', text: 'var(--color-text)' };
-    return `background: ${colors.bg}; border: 1px solid ${colors.border}; color: ${colors.text};`;
-  }
+  let isAdding = false;
   
   function handleAddToCart(event) {
     event.stopPropagation();
-    showToast(`${displayName} added to cart!`, 'success');
+    isAdding = true;
+    
+    setTimeout(() => {
+      isAdding = false;
+    }, 1200);
   }
   
   function handleCardClick() {
@@ -75,25 +50,41 @@
   aria-label="View {displayName} details"
 >
   <div class="card-header">
-    <p class="product-brand">{product.brand}</p>
+    <div class="brand-section">
+      <p class="product-brand">{product.brand}</p>
+    </div>
     {#if isExclusive}
-      <Tooltip text="WhatsApp Exclusive" position="top">
-        <div class="exclusive-ribbon">
-          <Icon name="whatsapp" size="16" />
-        </div>
-      </Tooltip>
+      <div class="exclusive-ribbon">
+        <Icon name="whatsapp" size="16" />
+      </div>
     {/if}
   </div>
   
-  <h3 class="product-name">{displayName}</h3>
+  <div class="product-info">
+    <h3 class="product-name">
+      {displayName}
+    </h3>
+    
+    <div class="product-details">
+      {#if gender && getGenderEmoji(gender)}
+        <span class="gender-emoji">{getGenderEmoji(gender)}</span>
+      {/if}
+      {#if availableSizes.length > 0}
+        <div class="product-sizes-box">
+          {availableSizes.join(' • ')}
+        </div>
+      {/if}
+    </div>
+  </div>
   
   {#if imageUrl}
     <img 
       src={imageUrl} 
       alt={product.name} 
       class="product-image"
-      loading="lazy"
+      loading={currentPage === 1 ? 'eager' : 'lazy'} 
       decoding="async"
+      fetchpriority={currentPage === 1 ? 'high' : 'auto'}
     />
   {/if}
   
@@ -104,17 +95,31 @@
     {/if}
   </div>
   
-  <div class="product-tags">
-    {#if product.attributes?.['Main Accords']}
+  {#if product.attributes?.['Main Accords'] && product.attributes['Main Accords'].length > 0 && !collectionLine}
+    <div class="product-tags">
       {#each product.attributes['Main Accords'] as tag}
         <span class="tag" style={getAccordStyle(tag)}>{tag}</span>
       {/each}
-    {/if}
-  </div>
+    </div>
+  {/if}
 
-  <button class="add-to-cart-footer" on:click={handleAddToCart}>
-    <Icon name="cart" size="20" />
-    Add to Cart
+  {#if collectionLine}
+    <div class="collection-signature">
+      {collectionLine}
+    </div>
+  {/if}
+
+  <!-- Spacer to push add-to-cart button to bottom -->
+  <div class="spacer"></div>
+
+  <button class="add-to-cart-footer" on:click={handleAddToCart} disabled={isAdding}>
+    {#if isAdding}
+      <Icon name="check" size="20" />
+      Added!
+    {:else}
+      <Icon name="cart" size="20" />
+      Add to Cart
+    {/if}
   </button>
 </div>
 
@@ -152,6 +157,12 @@
     justify-content: space-between;
     align-items: flex-start;
     margin: 0;
+  }
+  
+  .brand-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
   }
   
   .product-brand {
@@ -192,8 +203,37 @@
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+  
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .product-details {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .gender-emoji {
+    font-size: 1rem;
+    line-height: 1;
+  }
+  
+  .product-sizes-box {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #374151;
+    background: linear-gradient(135deg, var(--color-bg), #f8fafc);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    line-height: 1.2;
   }
   
   .product-image {
@@ -251,6 +291,8 @@
     justify-content: center;
     gap: 0.5rem;
     border-top: 1px solid var(--color-border);
+    width: calc(100% + 2.5rem);
+    box-sizing: border-box;
   }
   
   .add-to-cart-footer:hover {
@@ -262,6 +304,13 @@
   .add-to-cart-footer:active {
     transform: translateY(1px);
     background: linear-gradient(135deg, var(--color-gold), var(--color-gold-dark));
+  }
+  
+  .add-to-cart-footer:disabled {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    cursor: not-allowed;
+    border-color: #10b981;
   }
   
   .product-tags {
@@ -289,5 +338,85 @@
     transform: translateY(-1px) scale(1.02);
     box-shadow: var(--shadow-medium);
     filter: brightness(0.95);
+  }
+  
+  .collection-signature {
+    text-align: center;
+    font-family: 'Times New Roman', serif;
+    font-size: 0.875rem;
+    font-style: italic;
+    color: var(--color-text-light);
+    opacity: 0.8;
+    margin: 0.5rem 0;
+    padding: 0.25rem 0;
+    position: relative;
+  }
+  
+  .collection-signature::before {
+    content: '~ ';
+    opacity: 0.6;
+  }
+  
+  .collection-signature::after {
+    content: ' ~';
+    opacity: 0.6;
+  }
+  
+  .spacer {
+    flex-grow: 1;
+  }
+  
+  @media (max-width: 768px) {
+    .add-to-cart-footer {
+      margin: 1rem -1.25rem -1.25rem -1.25rem;
+      width: calc(100% + 2.5rem);
+      padding: 1.25rem 1rem;
+      font-size: 0.9rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .product-card {
+      padding: 1rem;
+      min-height: 420px;
+    }
+    
+    .add-to-cart-footer {
+      margin: 1rem 0 -1rem 0;
+      width: auto;
+      padding: 1rem 2rem;
+      font-size: 0.875rem;
+      border-radius: 8px;
+      border: 1px solid var(--color-border);
+      align-self: center;
+    }
+  }
+  
+  @media (max-resolution: 150dpi), (max-device-pixel-ratio: 1.5) {
+    .product-card {
+      border-width: 1.5px;
+      box-shadow: var(--shadow-medium);
+    }
+    
+    .product-card:hover {
+      border-width: 2px;
+    }
+    
+    .add-to-cart-footer {
+      border-top-width: 1.5px;
+    }
+    
+    .tag {
+      border-width: 1.5px;
+    }
+    
+    .product-sizes-box {
+      border-width: 1.5px;
+    }
+    
+    .collection-signature {
+      font-weight: 500;
+      opacity: 0.9;
+    }
   }
 </style>

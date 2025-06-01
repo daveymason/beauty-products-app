@@ -1,3 +1,5 @@
+export const prerender = true;
+
 export async function load({ fetch }) {
   try {
     const response = await fetch('/data_for_challange.json');
